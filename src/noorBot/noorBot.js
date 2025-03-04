@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ChatBot from "react-chatbotify";
-import {FetchResponse} from './noorBotAI';
+import {FetchResponse,UploadPDF} from './noorBotAI';
 import './noorBot.css';
 
 const settings = {
@@ -19,8 +19,11 @@ const settings = {
     },
     botBubble: {
       simStream: true
+    },
+    fileAttachment: {
+      enabled: true,           
+      accept: ".pdf" 
     }
-
   };
 
 const bodyStyle = {
@@ -32,18 +35,27 @@ const bodyStyle = {
   width:'100vw',
 }
 
-const runNoorAI = async(prompt) => {
-const response = await FetchResponse(prompt);
+const runNoorAI = async(params) => {
+var response = null;
+if(params.files!=null && params.files[0]!=null){
+  const file = params.files[0];
+  response = await UploadPDF(file);
+}
+else if(params.userInput!=null){
+  const prompt = params.userInput;
+  response = await FetchResponse(prompt);
+}
 return response;
 }
 
 const flow = {
   start:{
     message: "Hi, I'm NoorBot.....what is your query?",
-    path: "model"
+    path: "model",
+    file: async(params) => {return await runNoorAI(params)},
   },
   model:{
-    message: async(params) => {return await runNoorAI(params.userInput)},
+    message: async(params) => {return await runNoorAI(params)},
     path: "model"
   }
 };
